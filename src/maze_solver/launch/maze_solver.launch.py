@@ -48,6 +48,8 @@ def generate_launch_description():
         output='screen',
     )
 
+    
+
     joint_state_broadcaster_spawner = Node(
         package='controller_manager',
         executable='spawner',
@@ -59,6 +61,16 @@ def generate_launch_description():
         package='controller_manager',
         executable='spawner',
         arguments=['diff_drive_controller'],
+        output='screen',
+    )
+
+    clock_bridge = Node(
+        package='ros_gz_bridge',
+        executable='parameter_bridge',
+        name='clock_bridge',
+        arguments=[
+            '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock',
+        ],
         output='screen',
     )
 
@@ -91,6 +103,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='true'),
         gazebo,
+        clock_bridge,
         robot_state_publisher,
         spawn_robot,
         camera_bridge,

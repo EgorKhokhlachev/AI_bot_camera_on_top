@@ -35,7 +35,7 @@ class MapBuilder:
         green_mask = cv2.inRange(hsv, lower_green, upper_green)
 
         balls_mask = red_mask | green_mask
-        obstacle_mask = wall_mask | balls_mask
+        obstacle_mask = wall_mask | green_mask
 
         self.occupancy_grid = (obstacle_mask > 0).astype(np.uint8)
         return self.occupancy_grid

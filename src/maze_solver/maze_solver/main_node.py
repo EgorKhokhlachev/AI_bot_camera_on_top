@@ -196,10 +196,6 @@ class MazeRobotNode(Node):
             f"odom_is_none={self.latest_odom is None}"
         )
 
-        if self.latest_odom is None:
-            self.get_logger().warn('No odom yet, sending bootstrap cmd_vel')
-            self.publish_cmd(0.05, 0.0)
-            return
 
         if self.state in ['INIT', 'DONE'] or self.planner is None:
             return
@@ -268,22 +264,26 @@ class MazeRobotNode(Node):
             self.state = 'DONE'
             return
 
-        if self.planner.current_path is None:
+        # Если путь исчерпан или не существует – перепланируем
+        if self.planner.current_path is None or self.planner.waypoint_idx >= len(self.planner.current_path):
+            self.planner.current_path = None
             path = self.planner.astar((rx, ry), goal)
             if path is None:
-                self.get_logger().error('A* failed')
+                self.get_logger().error('A* failed to find path')
                 self.stop_robot()
                 self.state = 'DONE'
                 return
             self.planner.current_path = path
             self.planner.waypoint_idx = 0
 
+        # Движение по текущему пути
         idx = self.planner.waypoint_idx
         if idx < len(self.planner.current_path):
             wx, wy = self.planner.current_path[idx]
 
             if math.hypot(rx - wx, ry - wy) < self.planner.waypoint_tol:
                 self.planner.waypoint_idx += 1
+                # Если после этого путь закончился – остановим и дадим следующему циклу перепланировать
                 if self.planner.waypoint_idx >= len(self.planner.current_path):
                     self.stop_robot()
                     return
@@ -300,7 +300,8 @@ class MazeRobotNode(Node):
             )
             self.publish_cmd(v, w)
         else:
-            self.stop_robot()
+            # На всякий случай сбросим путь (обычно сюда не должны попадать)
+            self.planner.current_path = None
 
     def _obstacle_ahead(self):
         if self.latest_scan is None:

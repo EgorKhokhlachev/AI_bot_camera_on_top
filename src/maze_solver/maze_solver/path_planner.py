@@ -52,6 +52,9 @@ class PathPlanner:
             for dr, dc, cost in neighbors:
                 neighbor = (current[0]+dr, current[1]+dc)
                 if 0 <= neighbor[0] < h and 0 <= neighbor[1] < w and self.grid[neighbor] == 0:
+                    if cost > 1:
+                        if self.grid[current[0]+dr][current[1]] == 1 or self.grid[current[0]][current[1]+dc] == 1:
+                            continue
                     tentative = g_score[current] + cost
                     if tentative < g_score.get(neighbor, float('inf')):
                         came_from[neighbor] = current
